@@ -33,8 +33,8 @@ export async function getAllBlogSlugs() {
 
 export async function getAllBlogPosts() {
   const posts = Object.values(await getBlogSlugMap())
-  return posts.toSorted(blog => {
-    return new Date(blog.frontmatter.published).getTime()
+  return posts.toSorted((a, b) => {
+    return new Date(a.frontmatter.published).getTime() - new Date(b.frontmatter.published).getTime()
   });
 }
 
