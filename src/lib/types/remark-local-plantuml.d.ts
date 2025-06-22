@@ -1,0 +1,1 @@
+declare module '@mstroppel/remark-local-plantuml';
