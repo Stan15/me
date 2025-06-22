@@ -1,7 +1,5 @@
-import fs from 'fs';
 import path from 'path';
-import { walkDirectoryWithFilter } from './utils';
-import matter from "gray-matter";
+import { walkDirectoryWithFilter, extractRawFrontmatter, createSlugNameFromFilePath } from './utils';
 
 export interface PostFrontmatter {
   blog?: boolean;
@@ -54,13 +52,16 @@ async function createBlogSlugMap() {
   const markdownFiles = await walkDirectoryWithFilter(vaultPath, ["md", "mdx"]);
   for (const markdownFile of markdownFiles) {
     const relativePath = path.relative(vaultPath, markdownFile);
-    let frontmatter = extractFrontmatter(markdownFile);
+    let rawFrontmatter = extractRawFrontmatter(markdownFile);
 
-    let displayBlog = frontmatter.blog;
+    let displayBlog = Boolean(rawFrontmatter.blog);
     if (process.env.NODE_ENV === 'production') {
-      displayBlog &&= frontmatter.status === 'published';
+      displayBlog &&= rawFrontmatter.status === 'published';
     }
     if (!displayBlog) continue;
+
+    // Only validate and normalize frontmatter for blog posts
+    const frontmatter = validateAndNormalizeFrontmatter(rawFrontmatter, markdownFile);
 
     const slug = frontmatter.slug || createSlugNameFromFilePath(relativePath)
     if (slugMap[slug]) {
@@ -76,26 +77,28 @@ async function createBlogSlugMap() {
   return slugMap;
 }
 
-function createSlugNameFromFilePath(filePath: string) {
-  const filename = path.basename(filePath, path.extname(filePath));
-  return filename.replace(/[^A-Za-z0-9]+/gi, '-').toLowerCase();
-}
+function validateAndNormalizeFrontmatter(rawData: any, filePath: string): PostFrontmatter {
+  const validateDate = (dateValue: any, fieldName: string): string => {
+    if (!dateValue) {
+      throw new Error(`Blog post "${filePath}" is missing required field: ${fieldName}`);
+    }
+    const dateStr = String(dateValue);
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) {
+      throw new Error(`Blog post "${filePath}" has invalid ${fieldName}: "${dateStr}". Please use a valid date format.`);
+    }
+    return dateStr;
+  };
 
-function extractFrontmatter(markdownFilePath: string): PostFrontmatter {
-  const markdownContent = fs.readFileSync(markdownFilePath, 'utf8')
-
-  try {
-    return matter(markdownContent).data as PostFrontmatter;
-  } catch (error) {
-    // Extract first few lines of the file for context
-    const lines = markdownContent.split('\n').slice(0, 10);
-    const preview = lines.map((line, i) => `${i + 1}: ${line}`).join('\n');
-
-    throw new Error(
-      `Failed to parse YAML frontmatter in file: ${markdownFilePath}\n\n` +
-      `Error: ${error instanceof Error ? error.message : String(error)}\n\n` +
-      `File preview (first 10 lines):\n${preview}\n\n` +
-      `Please check the YAML syntax in the frontmatter section (between --- markers).`
-    );
-  }
+  return {
+    blog: Boolean(rawData.blog),
+    title: String(rawData.title || ''),
+    description: String(rawData.description || ''),
+    status: rawData.status,
+    published: validateDate(rawData.published, 'published'),
+    updated: rawData.updated ? validateDate(rawData.updated, 'updated') : undefined,
+    category: rawData.category ? String(rawData.category) : undefined,
+    tags: Array.isArray(rawData.tags) ? rawData.tags : (rawData.tags ? [String(rawData.tags)] : undefined),
+    slug: rawData.slug ? String(rawData.slug) : undefined,
+  };
 }

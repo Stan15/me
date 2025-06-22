@@ -4,7 +4,7 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
   const { slug } = await params
   const post = await findBlogPostBySlug(slug);
   
-  const { default: Post } = await import(`@vault/${post.filePath}`)
+  const { default: Post } = await import(`@vault/${post.filePath}` /* webpackInclude: /\.(md|mdx)$/ */)
 
   return <Post />
 }
