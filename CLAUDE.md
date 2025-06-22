@@ -134,38 +134,201 @@ blog/
 - **RSS Feed**: Auto-generated RSS feed for subscribers
 - **Performance**: Optimized for Vercel hosting with runtime processing
 
-## Current Status
-- Project initialized with Next.js + TypeScript + Tailwind
-- Switched to Vercel hosting for runtime processing capabilities
-- Architecture finalized: @next/mdx + runtime vault scanning + git submodule
-- **Completed**: 
-  - TypeScript types for frontmatter (PostFrontmatter interface) with comprehensive fields
-  - Vault scanner implementation (vault-scanner.ts) with:
-    - Slug mapping and duplicate detection with detailed error messages
-    - Environment-based filtering (published in prod, all in dev)
-    - Blog post filtering (`blog: true` required)
-    - Export functions: getAllBlogSlugs, findBlogPostBySlug, getAllBlogPosts
-  - Directory walking utility (utils.ts) for recursive file scanning with extension filtering
-  - Blog post page (blog/[slug]/page.tsx) with generateStaticParams and metadata generation
-  - Comprehensive test vault structure with edge cases:
-    - Valid posts (published, draft, nested, hidden)
-    - Invalid posts (missing fields, wrong types, malformed YAML)
-    - Non-blog content (private notes, files without blog flag)
-  - @vault TypeScript alias configuration
-  - Next.js dependencies properly installed and configured
-  - Development server running successfully
+## Current Status ✅ FULLY IMPLEMENTED AND TESTED
+
+**Core System Complete**: All fundamental blog functionality implemented and thoroughly tested with 23 comprehensive test cases.
+
+- ✅ **Blog System Architecture**: Next.js + @next/mdx + webpack-based processing (Turbopack removed for stability)
+- ✅ **Vault Scanner**: Complete implementation with robust error handling and type validation
+- ✅ **Content Processing Pipeline**: Full frontmatter validation, type coercion, and environment-based filtering
+- ✅ **Dynamic MDX System**: Both .md and .mdx files supported with @vault alias resolution
+- ✅ **Error Handling**: Comprehensive validation with detailed error messages and file context
+- ✅ **Testing Suite**: 23 tests covering all critical functionality with minimal mocking approach
+
+### Implementation Details Completed:
+- **TypeScript Infrastructure**: PostFrontmatter interface, @vault alias, proper module resolution
+- **Core Libraries**: 
+  - Vault scanner with slug mapping and duplicate detection
+  - Utils for file system operations (walkDirectoryWithFilter, extractRawFrontmatter)
+  - Type coercion and validation for frontmatter fields
+- **Blog Functionality**:
+  - Dynamic route generation with generateStaticParams
+  - Environment-based status filtering (dev shows all, prod shows published only)
+  - Custom and auto-generated slug support with collision detection
+  - Date validation that fails builds on invalid dates
+- **MDX Processing**:
+  - Full @next/mdx integration with remark/rehype plugins
+  - remark-frontmatter, remark-gfm, remark-math, rehype-katex, remark-plantuml
+  - Proper .md/.mdx extension handling with webpack configuration
+- **Error Resilience**:
+  - Non-blog files ignored gracefully (blog: false or missing flag)
+  - Invalid frontmatter handled with detailed error context
+  - Webpack rules to ignore non-markdown files during dynamic imports
+- **Test Coverage**:
+  - Blog filtering (true/false/coercion), status filtering, frontmatter validation
+  - Type coercion, slug generation, error handling, file processing, caching
+  - Edge cases: empty lists, mixed content, sorting, nested paths
+
+### Recent Fixes Applied:
+- ✅ Fixed sorting algorithm (was returning single value instead of comparison)
+- ✅ Resolved Turbopack compatibility issues by switching to webpack
+- ✅ Added comprehensive frontmatter type validation and coercion
+- ✅ Implemented proper date validation that fails builds on invalid dates
+- ✅ Enhanced error messages with file paths and context for debugging
+
+## Wikilinks Implementation Plan (Option 2: Runtime Resolution)
+
+### Overview
+Implement runtime resolution of wikilinks to provide obsidian.nvim-like experience on the blog. This approach uses remark plugins to parse wikilinks and convert them to React components that resolve links at render time, solving the data access problem by separating parsing from resolution.
+
+### The Data Access Solution
+**Problem**: Remark plugins run during MDX compilation but wikilinks map is computed at build time by vault scanner.
+**Solution**: Two-phase approach:
+1. **Remark Plugin**: Parse `[[...]]` syntax → `<WikiLink>` components (no data access needed)
+2. **React Component**: Resolve links at render time (has access to vault scanner data)
+
+### Technical Implementation
+
+#### 1. Obsidian-Style Path Resolution
+```typescript
+interface WikilinkResolver {
+  filenameMap: Map<string, BlogPostDescription>     // "filename" -> post
+  titleMap: Map<string, BlogPostDescription>        // "Page Title" -> post
+  aliasMap: Map<string, BlogPostDescription>        // "alias" -> post  
+  pathMap: Map<string, BlogPostDescription>         // "folder/file" -> post
+}
+```
+
+**Resolution Priority** (matches Obsidian):
+1. Exact filename match (case-insensitive): `[[My Post]]` → `My Post.md`
+2. Title match from frontmatter: `[[Custom Title]]` → matches `title: "Custom Title"`
+3. Path-based match: `[[folder/subfolder/file]]` → matches file location
+4. Alias match: `[[alias]]` → matches `aliases: [alias]` in frontmatter
+
+#### 2. Remark Plugin Implementation
+```javascript
+function remarkObsidianWikilinks() {
+  return (tree, file) => {
+    visit(tree, 'text', (node) => {
+      // Parse: [[target|display]] or [[target#heading|display]]
+      // Convert to: <WikiLink target="target" display="display" heading="heading" />
+      // No data access - purely syntactic transformation
+    })
+  }
+}
+```
+
+#### 3. WikiLink React Component
+```typescript
+function WikiLink({ target, display, heading }: WikiLinkProps) {
+  const wikilinkMap = useWikilinkMap() // Access to vault scanner data
+  const resolved = resolveWikilink(target, wikilinkMap)
+  
+  if (resolved.type === 'blog-post') {
+    const href = heading ? `/blog/${resolved.slug}#${heading}` : `/blog/${resolved.slug}`
+    return <Link href={href}>{display || target}</Link>
+  }
+  if (resolved.type === 'private-note') {
+    return <span className="private-link" title="Private content">{display || target} 🔒</span>
+  }
+  return <span className="broken-link" title="Link not found">{display || target} ❌</span>
+}
+```
+
+#### 4. Wikilink Resolution Logic
+**Link Parsing**: Support all Obsidian formats:
+- `[[Simple Link]]` → target: "Simple Link"
+- `[[Link|Display Text]]` → target: "Link", display: "Display Text"  
+- `[[file#heading]]` → target: "file", heading: "heading"
+- `[[folder/subfolder/file]]` → target: "folder/subfolder/file"
+
+**Content Classification**:
+- **Blog posts** (`blog: true` + published): Render as proper Next.js links
+- **Private notes** (`blog: false` or unpublished): Show privacy indicator 🔒
+- **Missing files**: Show broken link indicator ❌
+
+#### 5. Vault Scanner Integration
+Extend existing vault scanner to build wikilink resolution maps:
+```typescript
+// In vault-scanner.ts
+export async function buildWikilinkResolver(): Promise<WikilinkResolver> {
+  // Scan ALL files (not just blog posts) for comprehensive link resolution
+  // Build filename, title, alias, and path maps
+  // Include both blog posts and private notes for link detection
+}
+```
+
+### Implementation Steps
+
+1. **Extend Vault Scanner** (`src/lib/vault-scanner.ts`):
+   - Add `buildWikilinkResolver()` function
+   - Scan all vault files (not just blog posts) for comprehensive mapping
+   - Build all four resolution maps (filename, title, alias, path)
+
+2. **Create Remark Plugin** (`src/lib/remark-obsidian-wikilinks.ts`):
+   - Parse `[[target|display]]` and `[[target#heading]]` syntax
+   - Convert to `<WikiLink>` JSX components
+   - Handle edge cases: escaped brackets, nested brackets
+
+3. **WikiLink Component** (`src/components/WikiLink.tsx`):
+   - Runtime resolution using wikilink resolver
+   - Different styling for blog posts, private notes, broken links
+   - Support for heading anchors
+
+4. **Add to MDX Config** (next.config.ts):
+   ```javascript
+   remarkPlugins: [
+     remarkFrontmatter, 
+     remarkObsidianWikilinks,  // New plugin
+     remarkGfm, 
+     remarkMath, 
+     remarkPlantuml
+   ]
+   ```
+
+5. **Styling** (`src/styles/`):
+   - Blog link: Standard link styling
+   - Private link: Muted with lock icon
+   - Broken link: Red with broken link icon
+
+### Obsidian Feature Support
+- ✅ **Case-insensitive matching**: `[[blog post]]` matches `[[Blog Post]]`
+- ✅ **Unique filename resolution**: `[[filename]]` works regardless of folder location
+- ✅ **Path-based links**: `[[folder/subfolder/file]]` for explicit paths
+- ✅ **Display text**: `[[target|Custom Display]]` syntax
+- ✅ **Heading links**: `[[post#section]]` for anchor links
+- ✅ **Alias support**: Resolve links to `aliases: [alias1, alias2]` frontmatter
+
+### Benefits of This Approach
+- **Perfect Obsidian Compatibility**: Exact same link behavior as obsidian.nvim
+- **Privacy Aware**: Automatic handling of private/unpublished content with indicators
+- **Runtime Resolution**: Works with our existing vault scanning architecture
+- **No Build Complexity**: Clean separation between parsing and resolution
+- **SEO Friendly**: Published blog links become proper HTML links
+- **Performance**: Can be cached and optimized at component level
+
+### Technical Advantages
+- **Data Access Solved**: React components have full access to vault data
+- **Clean Architecture**: Remark handles syntax, React handles business logic
+- **Extensible**: Easy to add new link types or resolution rules
+- **Maintainable**: Separate concerns make debugging and updates easier
 
 ## Next Steps
-1. **Test and debug current implementation**:
-   - Test vault scanner with all test files
-   - Debug any runtime issues with @vault imports
-   - Verify generateStaticParams produces correct routes
-2. **Build blog UI components and layouts**:
-   - Create blog post listing page
-   - Design blog layout and styling
-   - Add navigation and metadata display
-3. **Set up Vercel deployment**
-4. **Convert vault/ to actual git submodule**
+1. **Deploy to Vercel**: 
+   - Connect GitHub repository to Vercel
+   - No custom GitHub Actions needed - Vercel auto-detects Next.js
+   - Test production deployment with current vault structure
+2. **UI/UX Development**:
+   - Design blog layout and styling (currently functional but minimal)
+   - Add navigation, search, and content discovery features
+   - Implement RSS feed generation
+3. **Advanced Features**:
+   - Wikilinks processing for internal note references (detailed plan above)
+   - Tag-based filtering and categorization
+   - Image optimization and asset handling
+4. **Production Optimization**:
+   - Convert vault/ to git submodule for independent vault management
+   - Add performance monitoring and analytics
 
 ## Implementation Notes
 - User implementing with guidance rather than automated coding
@@ -179,7 +342,8 @@ npm run dev        # Start development server
 npm run build      # Build for production  
 npm run start      # Start production server
 npm run lint       # Run ESLint
-npm run typecheck  # Run TypeScript checks (when available)
+npm test           # Run comprehensive test suite (23 tests)
+npm run test:ui    # Run tests with interactive UI
 ```
 
 ## Error Handling Philosophy
