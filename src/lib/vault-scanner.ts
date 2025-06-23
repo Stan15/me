@@ -52,7 +52,7 @@ async function createBlogSlugMap() {
   const markdownFiles = await walkDirectoryWithFilter(vaultPath, ["md", "mdx"]);
   for (const markdownFile of markdownFiles) {
     const relativePath = path.relative(vaultPath, markdownFile);
-    let rawFrontmatter = extractRawFrontmatter(markdownFile);
+    const rawFrontmatter = extractRawFrontmatter(markdownFile);
 
     let displayBlog = Boolean(rawFrontmatter.blog);
     if (process.env.NODE_ENV === 'production') {
@@ -77,8 +77,8 @@ async function createBlogSlugMap() {
   return slugMap;
 }
 
-function validateAndNormalizeFrontmatter(rawData: any, filePath: string): PostFrontmatter {
-  const validateDate = (dateValue: any, fieldName: string): string => {
+function validateAndNormalizeFrontmatter(rawData: Record<string, unknown>, filePath: string): PostFrontmatter {
+  const validateDate = (dateValue: unknown, fieldName: string): string => {
     if (!dateValue) {
       throw new Error(`Blog post "${filePath}" is missing required field: ${fieldName}`);
     }
@@ -90,11 +90,16 @@ function validateAndNormalizeFrontmatter(rawData: any, filePath: string): PostFr
     return dateStr;
   };
 
+  const status = String(rawData.status || 'draft');
+  if (!['published', 'draft', 'idea'].includes(status)) {
+    throw new Error(`Blog post "${filePath}" has invalid status: "${status}". Must be one of: published, draft, idea`);
+  }
+
   return {
     blog: Boolean(rawData.blog),
     title: String(rawData.title || ''),
     description: String(rawData.description || ''),
-    status: rawData.status,
+    status: status as 'published' | 'draft' | 'idea',
     published: validateDate(rawData.published, 'published'),
     updated: rawData.updated ? validateDate(rawData.updated, 'updated') : undefined,
     category: rawData.category ? String(rawData.category) : undefined,

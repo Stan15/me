@@ -33,9 +33,9 @@ describe('Blog System', () => {
 
   describe('Blog Filtering', () => {
     it('includes posts with blog: true', async () => {
-      const { getAllBlogPosts, getAllBlogSlugs, findBlogPostBySlug, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
-      
-      
+      const { getAllBlogPosts, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
+
+
       const mockFiles = ['/project/vault/post.md']
       vi.mocked(walkDirectoryWithFilter).mockResolvedValue(mockFiles)
       vi.mocked(extractRawFrontmatter).mockImplementation((filePath) => {
@@ -52,7 +52,7 @@ describe('Blog System', () => {
       })
 
       const posts = await getAllBlogPosts()
-      
+
       expect(walkDirectoryWithFilter).toHaveBeenCalledWith(
         expect.stringContaining('vault'),
         ['md', 'mdx']
@@ -62,9 +62,9 @@ describe('Blog System', () => {
     })
 
     it('excludes posts with blog: false', async () => {
-      const { getAllBlogPosts, getAllBlogSlugs, findBlogPostBySlug, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
-      
-      
+      const { getAllBlogPosts, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
+
+
       const mockFiles = ['/project/vault/not-blog.md']
       vi.mocked(walkDirectoryWithFilter).mockResolvedValue(mockFiles)
       vi.mocked(extractRawFrontmatter).mockImplementation((filePath) => {
@@ -80,15 +80,15 @@ describe('Blog System', () => {
       })
 
       const posts = await getAllBlogPosts()
-      
+
       expect(extractRawFrontmatter).toHaveBeenCalledWith('/project/vault/not-blog.md')
       expect(posts).toHaveLength(0)
     })
 
     it('excludes posts without blog field', async () => {
-      const { getAllBlogPosts, getAllBlogSlugs, findBlogPostBySlug, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
-      
-      
+      const { getAllBlogPosts, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
+
+
       const mockFiles = ['/project/vault/no-blog.md']
       vi.mocked(walkDirectoryWithFilter).mockResolvedValue(mockFiles)
       vi.mocked(extractRawFrontmatter).mockImplementation((filePath) => {
@@ -103,14 +103,14 @@ describe('Blog System', () => {
       })
 
       const posts = await getAllBlogPosts()
-      
+
       expect(extractRawFrontmatter).toHaveBeenCalledWith('/project/vault/no-blog.md')
       expect(posts).toHaveLength(0)
     })
 
     it('coerces truthy blog values to true', async () => {
-      const { getAllBlogPosts, getAllBlogSlugs, findBlogPostBySlug, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
-      
+      const { getAllBlogPosts, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
+
       const mockFiles = ['/project/vault/string-blog.md']
       vi.mocked(walkDirectoryWithFilter).mockResolvedValue(mockFiles)
       vi.mocked(extractRawFrontmatter).mockImplementation((filePath) => {
@@ -118,7 +118,7 @@ describe('Blog System', () => {
           return {
             blog: 'true',
             title: 'String Blog',
-            description: 'Test desc', 
+            description: 'Test desc',
             status: 'published',
             published: '2024-01-15'
           }
@@ -127,7 +127,7 @@ describe('Blog System', () => {
       })
 
       const posts = await getAllBlogPosts()
-      
+
       expect(extractRawFrontmatter).toHaveBeenCalledWith('/project/vault/string-blog.md')
       expect(posts).toHaveLength(1)
       expect(posts[0].frontmatter.blog).toBe(true)
@@ -136,8 +136,8 @@ describe('Blog System', () => {
 
   describe('Status Filtering', () => {
     it('shows all statuses in development', async () => {
-      const { getAllBlogPosts, getAllBlogSlugs, findBlogPostBySlug, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
-      
+      const { getAllBlogPosts, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
+
       const originalEnv = process.env.NODE_ENV
       process.env.NODE_ENV = 'development'
 
@@ -166,7 +166,7 @@ describe('Blog System', () => {
       })
 
       const posts = await getAllBlogPosts()
-      
+
       expect(extractRawFrontmatter).toHaveBeenCalledWith('/project/vault/published.md')
       expect(extractRawFrontmatter).toHaveBeenCalledWith('/project/vault/draft.md')
       expect(posts).toHaveLength(2)
@@ -175,8 +175,8 @@ describe('Blog System', () => {
     })
 
     it('shows only published in production', async () => {
-      const { getAllBlogPosts, getAllBlogSlugs, findBlogPostBySlug, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
-      
+      const { getAllBlogPosts, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
+
       const originalEnv = process.env.NODE_ENV
       process.env.NODE_ENV = 'production'
 
@@ -205,7 +205,7 @@ describe('Blog System', () => {
       })
 
       const posts = await getAllBlogPosts()
-      
+
       expect(extractRawFrontmatter).toHaveBeenCalledWith('/project/vault/published.md')
       expect(extractRawFrontmatter).toHaveBeenCalledWith('/project/vault/draft.md')
       expect(posts).toHaveLength(1)
@@ -217,8 +217,8 @@ describe('Blog System', () => {
 
   describe('Frontmatter Validation', () => {
     it('validates required published field', async () => {
-      const { getAllBlogPosts, getAllBlogSlugs, findBlogPostBySlug, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
-      
+      const { getAllBlogPosts, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
+
       const mockFiles = ['/project/vault/no-published.md']
       vi.mocked(walkDirectoryWithFilter).mockResolvedValue(mockFiles)
       vi.mocked(extractRawFrontmatter).mockImplementation((filePath) => {
@@ -239,8 +239,8 @@ describe('Blog System', () => {
     })
 
     it('validates published date format', async () => {
-      const { getAllBlogPosts, getAllBlogSlugs, findBlogPostBySlug, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
-      
+      const { getAllBlogPosts, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
+
       const mockFiles = ['/project/vault/invalid-date.md']
       vi.mocked(walkDirectoryWithFilter).mockResolvedValue(mockFiles)
       vi.mocked(extractRawFrontmatter).mockImplementation((filePath) => {
@@ -261,8 +261,8 @@ describe('Blog System', () => {
     })
 
     it('validates updated date format when provided', async () => {
-      const { getAllBlogPosts, getAllBlogSlugs, findBlogPostBySlug, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
-      
+      const { getAllBlogPosts, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
+
       const mockFiles = ['/project/vault/invalid-updated.md']
       vi.mocked(walkDirectoryWithFilter).mockResolvedValue(mockFiles)
       vi.mocked(extractRawFrontmatter).mockImplementation((filePath) => {
@@ -284,8 +284,8 @@ describe('Blog System', () => {
     })
 
     it('accepts valid date formats', async () => {
-      const { getAllBlogPosts, getAllBlogSlugs, findBlogPostBySlug, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
-      
+      const { getAllBlogPosts, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
+
       const mockFiles = ['/project/vault/valid-dates.md']
       vi.mocked(walkDirectoryWithFilter).mockResolvedValue(mockFiles)
       vi.mocked(extractRawFrontmatter).mockImplementation((filePath) => {
@@ -303,7 +303,7 @@ describe('Blog System', () => {
       })
 
       const posts = await getAllBlogPosts()
-      
+
       expect(extractRawFrontmatter).toHaveBeenCalledWith('/project/vault/valid-dates.md')
       expect(posts).toHaveLength(1)
       expect(posts[0].frontmatter.published).toBe('2024-01-15T10:30:00Z')
@@ -313,8 +313,8 @@ describe('Blog System', () => {
 
   describe('Type Coercion', () => {
     it('coerces various field types correctly', async () => {
-      const { getAllBlogPosts, getAllBlogSlugs, findBlogPostBySlug, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
-      
+      const { getAllBlogPosts, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
+
       const mockFiles = ['/project/vault/type-coercion.md']
       vi.mocked(walkDirectoryWithFilter).mockResolvedValue(mockFiles)
       vi.mocked(extractRawFrontmatter).mockImplementation((filePath) => {
@@ -333,7 +333,7 @@ describe('Blog System', () => {
       })
 
       const posts = await getAllBlogPosts()
-      
+
       expect(extractRawFrontmatter).toHaveBeenCalledWith('/project/vault/type-coercion.md')
       expect(posts[0].frontmatter.blog).toBe(true)
       expect(posts[0].frontmatter.title).toBe('123')
@@ -343,8 +343,8 @@ describe('Blog System', () => {
     })
 
     it('handles array tags correctly', async () => {
-      const { getAllBlogPosts, getAllBlogSlugs, findBlogPostBySlug, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
-      
+      const { getAllBlogPosts, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
+
       const mockFiles = ['/project/vault/array-tags.md']
       vi.mocked(walkDirectoryWithFilter).mockResolvedValue(mockFiles)
       vi.mocked(extractRawFrontmatter).mockImplementation((filePath) => {
@@ -362,7 +362,7 @@ describe('Blog System', () => {
       })
 
       const posts = await getAllBlogPosts()
-      
+
       expect(extractRawFrontmatter).toHaveBeenCalledWith('/project/vault/array-tags.md')
       expect(posts[0].frontmatter.tags).toEqual(['tag1', 'tag2', 'tag3'])
     })
@@ -371,7 +371,7 @@ describe('Blog System', () => {
   describe('Slug Generation', () => {
     it('uses custom slug from frontmatter', async () => {
       const { getAllBlogPosts, getAllBlogSlugs, findBlogPostBySlug, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
-      
+
       const mockFiles = ['/project/vault/custom-slug-post.md']
       vi.mocked(walkDirectoryWithFilter).mockResolvedValue(mockFiles)
       vi.mocked(extractRawFrontmatter).mockImplementation((filePath) => {
@@ -391,7 +391,7 @@ describe('Blog System', () => {
       const posts = await getAllBlogPosts()
       const slugs = await getAllBlogSlugs()
       const foundPost = await findBlogPostBySlug('my-custom-slug')
-      
+
       expect(extractRawFrontmatter).toHaveBeenCalledWith('/project/vault/custom-slug-post.md')
       expect(posts[0].slug).toBe('my-custom-slug')
       expect(slugs).toContain('my-custom-slug')
@@ -399,8 +399,8 @@ describe('Blog System', () => {
     })
 
     it('generates slug from filename when no custom slug', async () => {
-      const { getAllBlogPosts, getAllBlogSlugs, findBlogPostBySlug, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
-      
+      const { getAllBlogPosts, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
+
       const mockFiles = ['/project/vault/My Cool Post!.md']
       vi.mocked(walkDirectoryWithFilter).mockResolvedValue(mockFiles)
       vi.mocked(extractRawFrontmatter).mockImplementation((filePath) => {
@@ -417,15 +417,15 @@ describe('Blog System', () => {
       })
 
       const posts = await getAllBlogPosts()
-      
+
       expect(extractRawFrontmatter).toHaveBeenCalledWith('/project/vault/My Cool Post!.md')
       expect(posts[0].slug).toBe('my-cool-post-')
       expect(posts[0].filePath).toBe('My Cool Post!.md')
     })
 
     it('detects duplicate custom slugs', async () => {
-      const { getAllBlogPosts, getAllBlogSlugs, findBlogPostBySlug, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
-      
+      const { getAllBlogPosts, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
+
       const mockFiles = ['/project/vault/post1.md', '/project/vault/post2.md']
       vi.mocked(walkDirectoryWithFilter).mockResolvedValue(mockFiles)
       vi.mocked(extractRawFrontmatter).mockImplementation((filePath) => {
@@ -458,8 +458,8 @@ describe('Blog System', () => {
     })
 
     it('detects duplicate generated slugs', async () => {
-      const { getAllBlogPosts, getAllBlogSlugs, findBlogPostBySlug, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
-      
+      const { getAllBlogPosts, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
+
       const mockFiles = ['/project/vault/same-name.md', '/project/vault/nested/same-name.md']
       vi.mocked(walkDirectoryWithFilter).mockResolvedValue(mockFiles)
       vi.mocked(extractRawFrontmatter).mockImplementation((filePath) => {
@@ -483,8 +483,8 @@ describe('Blog System', () => {
 
   describe('Error Handling', () => {
     it('propagates YAML parsing errors with file context', async () => {
-      const { getAllBlogPosts, getAllBlogSlugs, findBlogPostBySlug, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
-      
+      const { getAllBlogPosts, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
+
       const mockFiles = ['/project/vault/malformed.md']
       vi.mocked(walkDirectoryWithFilter).mockResolvedValue(mockFiles)
       vi.mocked(extractRawFrontmatter).mockImplementation((filePath) => {
@@ -499,8 +499,8 @@ describe('Blog System', () => {
     })
 
     it('includes file path in validation errors', async () => {
-      const { getAllBlogPosts, getAllBlogSlugs, findBlogPostBySlug, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
-      
+      const { getAllBlogPosts, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
+
       const mockFiles = ['/project/vault/nested/deep/invalid.md']
       vi.mocked(walkDirectoryWithFilter).mockResolvedValue(mockFiles)
       vi.mocked(extractRawFrontmatter).mockImplementation((filePath) => {
@@ -523,8 +523,8 @@ describe('Blog System', () => {
 
   describe('Sorting and File Processing', () => {
     it('sorts posts by published date and processes relative paths correctly', async () => {
-      const { getAllBlogPosts, getAllBlogSlugs, findBlogPostBySlug, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
-      
+      const { getAllBlogPosts, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
+
       const mockFiles = [
         '/project/vault/newer.md',
         '/project/vault/nested/older.md'
@@ -553,7 +553,7 @@ describe('Blog System', () => {
       })
 
       const posts = await getAllBlogPosts()
-      
+
       expect(extractRawFrontmatter).toHaveBeenCalledWith('/project/vault/newer.md')
       expect(extractRawFrontmatter).toHaveBeenCalledWith('/project/vault/nested/older.md')
       expect(posts).toHaveLength(2)
@@ -564,8 +564,8 @@ describe('Blog System', () => {
     })
 
     it('calls walkDirectoryWithFilter with vault path and correct extensions', async () => {
-      const { getAllBlogPosts, getAllBlogSlugs, findBlogPostBySlug, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
-      
+      const { getAllBlogPosts, walkDirectoryWithFilter } = await getVaultScanner()
+
       vi.mocked(walkDirectoryWithFilter).mockResolvedValue([])
 
       await getAllBlogPosts()
@@ -581,7 +581,7 @@ describe('Blog System', () => {
   describe('Caching', () => {
     it('caches results between different function calls', async () => {
       const { getAllBlogPosts, getAllBlogSlugs, findBlogPostBySlug, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
-      
+
       const mockFiles = ['/project/vault/cached.md']
       vi.mocked(walkDirectoryWithFilter).mockResolvedValue(mockFiles)
       vi.mocked(extractRawFrontmatter).mockImplementation((filePath) => {
@@ -612,7 +612,7 @@ describe('Blog System', () => {
   describe('Edge Cases', () => {
     it('handles empty file list correctly', async () => {
       const { getAllBlogPosts, getAllBlogSlugs, findBlogPostBySlug, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
-      
+
       vi.mocked(walkDirectoryWithFilter).mockResolvedValue([])
 
       const posts = await getAllBlogPosts()
@@ -630,8 +630,8 @@ describe('Blog System', () => {
     })
 
     it('processes mixed blog and non-blog files correctly', async () => {
-      const { getAllBlogPosts, getAllBlogSlugs, findBlogPostBySlug, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
-      
+      const { getAllBlogPosts, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
+
       const mockFiles = [
         '/project/vault/blog-post.md',
         '/project/vault/private-note.md',

@@ -27,7 +27,7 @@ export async function walkDirectoryWithFilter(dirPath: string, extensions: strin
   return files
 }
 
-export function extractRawFrontmatter(markdownFilePath: string): any {
+export function extractRawFrontmatter(markdownFilePath: string): Record<string, unknown> {
   const markdownContent = fsSync.readFileSync(markdownFilePath, 'utf8')
 
   try {
