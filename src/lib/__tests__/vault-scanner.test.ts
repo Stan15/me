@@ -138,8 +138,7 @@ describe('Blog System', () => {
     it('shows all statuses in development', async () => {
       const { getAllBlogPosts, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
 
-      const originalEnv = process.env.NODE_ENV
-      process.env.NODE_ENV = 'development'
+      vi.stubEnv('NODE_ENV', 'development')
 
       const mockFiles = ['/project/vault/published.md', '/project/vault/draft.md']
       vi.mocked(walkDirectoryWithFilter).mockResolvedValue(mockFiles)
@@ -170,15 +169,12 @@ describe('Blog System', () => {
       expect(extractRawFrontmatter).toHaveBeenCalledWith('/project/vault/published.md')
       expect(extractRawFrontmatter).toHaveBeenCalledWith('/project/vault/draft.md')
       expect(posts).toHaveLength(2)
-
-      process.env.NODE_ENV = originalEnv
     })
 
     it('shows only published in production', async () => {
       const { getAllBlogPosts, walkDirectoryWithFilter, extractRawFrontmatter } = await getVaultScanner()
 
-      const originalEnv = process.env.NODE_ENV
-      process.env.NODE_ENV = 'production'
+      vi.stubEnv('NODE_ENV', 'production')
 
       const mockFiles = ['/project/vault/published.md', '/project/vault/draft.md']
       vi.mocked(walkDirectoryWithFilter).mockResolvedValue(mockFiles)
@@ -210,8 +206,6 @@ describe('Blog System', () => {
       expect(extractRawFrontmatter).toHaveBeenCalledWith('/project/vault/draft.md')
       expect(posts).toHaveLength(1)
       expect(posts[0].frontmatter.status).toBe('published')
-
-      process.env.NODE_ENV = originalEnv
     })
   })
 
