@@ -313,18 +313,253 @@ export async function buildWikilinkResolver(): Promise<WikilinkResolver> {
 - **Extensible**: Easy to add new link types or resolution rules
 - **Maintainable**: Separate concerns make debugging and updates easier
 
+## ✅ APPROVED DESIGN SYSTEM: Cassidy-Inspired Personal Blog
+
+### Design Philosophy
+**"Approachable Expertise"** - Professional technical content presented with warmth, personality, and playful interactive elements, while maintaining excellent readability and content focus.
+
+### Design System Specifications
+
+#### Color Palette
+```css
+/* Primary Colors */
+--bg-light: #fefefe
+--bg-dark: #0f0f0f
+--text-light: #2a2a2a
+--text-dark: #e8e8e8
+
+/* Cassidy-Inspired Dynamic Accent System */
+--accent-colors: [
+  "#24d05a", /* Green */
+  "#eb4888", /* Pink */
+  "#10a2f5", /* Blue */
+  "#e9bc3f", /* Yellow */
+  "#9d4edd", /* Purple */
+  "#f72585"  /* Magenta */
+]
+
+/* Neutral Grays */
+--gray-50: #f9fafb
+--gray-100: #f3f4f6
+--gray-700: #374151
+--gray-800: #1f2937
+```
+
+#### Typography System
+```css
+/* Primary Font Stack */
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+/* Hierarchy */
+--text-4xl: 2.25rem   /* Hero titles */
+--text-3xl: 1.875rem  /* Page titles */
+--text-2xl: 1.5rem    /* Blog post titles */
+--text-xl: 1.25rem    /* Section headers */
+--text-lg: 1.125rem   /* Subtitles */
+--text-base: 1rem     /* Body text */
+--text-sm: 0.875rem   /* Metadata */
+
+/* Code Typography */
+font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', monospace;
+```
+
+#### Interactive Elements
+- **Dynamic Color System**: Random accent colors applied to links, tags, and interactive elements
+- **Hover Effects**: Subtle scale transforms and color transitions
+- **Smooth Transitions**: 200ms ease-in-out for all interactive states
+
+### Layout Structure
+
+#### Homepage Design
+```jsx
+<main className="max-w-2xl mx-auto px-6 py-12">
+  {/* Hero Section */}
+  <section className="text-center mb-16">
+    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-accent-1 to-accent-2 mx-auto mb-6" />
+    <h1 className="text-4xl font-bold mb-4">Your Name</h1>
+    <p className="text-xl text-gray-600 dark:text-gray-300 mb-6">
+      I write about software engineering, linguistics, and physics
+    </p>
+    <div className="flex justify-center gap-4 text-sm">
+      <a href="/blog" className="hover-accent">Blog</a>
+      <a href="/about" className="hover-accent">About</a>
+      <a href="/tags" className="hover-accent">Tags</a>
+    </div>
+  </section>
+
+  {/* Recent Posts */}
+  <section>
+    <h2 className="text-2xl font-bold mb-8">Recent Posts</h2>
+    {/* Post list with dynamic accent colors */}
+  </section>
+</main>
+```
+
+#### Blog Post List (Cassidy-Style)
+```jsx
+<div className="space-y-6">
+  {posts.map(post => (
+    <article key={post.slug} className="group">
+      <Link href={`/blog/${post.slug}`} className="block hover-lift">
+        <h3 className="text-xl font-semibold mb-2 group-hover:text-accent transition-colors">
+          {post.title}
+        </h3>
+        <p className="text-gray-600 dark:text-gray-300 mb-3">
+          {post.description}
+        </p>
+        <div className="flex items-center gap-4 text-sm text-gray-500">
+          <time>{formatDate(post.published)}</time>
+          {post.tags && (
+            <div className="flex gap-2">
+              {post.tags.map(tag => (
+                <span key={tag} className="tag-accent">#{tag}</span>
+              ))}
+            </div>
+          )}
+        </div>
+      </Link>
+    </article>
+  ))}
+</div>
+```
+
+#### Tag Filtering System
+```jsx
+<section className="mb-12">
+  <h2 className="text-2xl font-bold mb-6">Browse by Topic</h2>
+  <div className="flex flex-wrap gap-3">
+    <button className="tag-filter active" data-tag="all">All Posts</button>
+    <button className="tag-filter" data-tag="software-engineering">#software-engineering</button>
+    <button className="tag-filter" data-tag="linguistics">#linguistics</button>
+    <button className="tag-filter" data-tag="physics">#physics</button>
+  </div>
+</section>
+```
+
+### Key Features Implementation
+
+#### Dynamic Accent Color System
+```javascript
+// Random color assignment like Cassidy's site
+const accentColors = ["#24d05a", "#eb4888", "#10a2f5", "#e9bc3f", "#9d4edd", "#f72585"];
+const getRandomAccent = () => accentColors[Math.floor(Math.random() * accentColors.length)];
+
+// Apply to interactive elements
+useEffect(() => {
+  document.querySelectorAll('.hover-accent').forEach(el => {
+    el.style.setProperty('--accent-color', getRandomAccent());
+  });
+}, []);
+```
+
+#### Tag-Based Content Discovery
+- **Visual Tag System**: Colored tags with consistent styling
+- **Filter Functionality**: Client-side filtering by tag
+- **Tag Cloud**: Popular tags with dynamic sizing
+- **Tag Pages**: Dedicated pages for each tag
+
+#### Interactive Reading Experience
+- **Smooth Transitions**: Hover effects on post previews
+- **Color-Coded Elements**: Links, blockquotes, code blocks get random accent colors
+- **Progressive Enhancement**: Works without JavaScript
+
+### Blog Post Layout
+
+#### Individual Post Design
+```jsx
+<article className="max-w-3xl mx-auto px-6 py-12">
+  {/* Post Header */}
+  <header className="mb-12 text-center">
+    <h1 className="text-4xl font-bold mb-4">{post.title}</h1>
+    <p className="text-xl text-gray-600 dark:text-gray-300 mb-6">{post.description}</p>
+    <div className="flex justify-center items-center gap-6 text-sm text-gray-500">
+      <time>{formatDate(post.published)}</time>
+      {post.updated && <span>Updated {formatDate(post.updated)}</span>}
+      <div className="flex gap-2">
+        {post.tags?.map(tag => (
+          <Link key={tag} href={`/tags/${tag}`} className="tag-accent">#{tag}</Link>
+        ))}
+      </div>
+    </div>
+  </header>
+
+  {/* Post Content */}
+  <div className="prose prose-lg dark:prose-invert max-w-none">
+    {/* MDX content with custom components */}
+  </div>
+</article>
+```
+
+### Technical Implementation
+
+#### CSS Custom Properties
+```css
+.hover-accent {
+  --accent-color: #10a2f5;
+  transition: color 200ms ease-in-out;
+}
+
+.hover-accent:hover {
+  color: var(--accent-color);
+}
+
+.tag-accent {
+  color: var(--accent-color);
+  transition: all 200ms ease-in-out;
+}
+
+.tag-accent:hover {
+  background: var(--accent-color);
+  color: white;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  transition: transform 200ms ease-in-out;
+}
+```
+
+#### Components to Build
+1. **TagFilter** - Interactive tag filtering
+2. **PostPreview** - Blog post card with hover effects
+3. **RandomAccentProvider** - Dynamic color assignment
+4. **TagCloud** - Visual tag discovery
+5. **ThemeToggle** - Dark/light mode switcher
+
+### Personality Touches
+
+#### Cassidy-Inspired Elements
+- **Playful Bio**: "I like to make ideas, code, and explanations that actually make sense"
+- **Random Post Button**: "Surprise me!" feature
+- **Dynamic Colors**: Links and accents change colors on page load
+- **Easter Eggs**: Subtle interactions and hover surprises
+- **Approachable Tone**: Professional but not corporate
+
+#### Content Discovery
+- **Tag-based navigation** (primary feature you loved)
+- **Recent posts** with engaging previews
+- **Search functionality** for content discovery
+- **RSS feed** for subscribers
+
+### Performance & Accessibility
+- **Semantic HTML**: Proper heading hierarchy, ARIA labels
+- **Color Contrast**: WCAG AA compliance for all color combinations
+- **Responsive Design**: Mobile-first approach
+- **Fast Loading**: Optimized images, minimal JavaScript
+- **Keyboard Navigation**: Full keyboard accessibility
+
 ## Next Steps
 1. **Deploy to Vercel**: 
    - Connect GitHub repository to Vercel
    - No custom GitHub Actions needed - Vercel auto-detects Next.js
    - Test production deployment with current vault structure
-2. **UI/UX Development**:
-   - Design blog layout and styling (currently functional but minimal)
-   - Add navigation, search, and content discovery features
-   - Implement RSS feed generation
+2. **UI/UX Implementation** (READY TO START):
+   - Implement approved Cassidy-inspired design system
+   - Build component library with dynamic accent colors
+   - Add tag-based filtering and content discovery
 3. **Advanced Features**:
    - Wikilinks processing for internal note references (detailed plan above)
-   - Tag-based filtering and categorization
+   - Search functionality and RSS feed generation
    - Image optimization and asset handling
 4. **Production Optimization**:
    - Convert vault/ to git submodule for independent vault management
