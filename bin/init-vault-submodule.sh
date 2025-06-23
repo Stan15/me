@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Credit: https://timmyomahony.com/blog/private-git-submodule-with-vercel/
 
 # Move to the repo root
 cd "$(git rev-parse --show-toplevel)"
@@ -20,6 +21,14 @@ fi
 # Clean local content dir if needed
 rm -rf content
 
+# Remove vault directory if it exists (Vercel may create empty directory)
+rm -rf vault
+
 # Add the submodule
 echo "Adding submodule..."
 git submodule add -f "https://Stan15:${GITHUB_VAULT_REPO_CLONE_TOKEN}@github.com/Stan15/vault.git" vault
+
+# Sync & init
+echo "Syncing and initializing submodules..."
+git submodule sync
+git submodule update --init --recursive
