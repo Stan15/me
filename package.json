@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "install:vercel": "bash ./bin/init-submodule.sh && npm install",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
